@@ -1,0 +1,33 @@
+#!/usr/bin/env ruby
+# encoding: UTF-8
+
+require 'pathname'
+ROOT = Pathname.new(__FILE__).realpath.dirname.to_s
+COMMANDS_PATH = ROOT + "/Commands"
+$:.unshift(COMMANDS_PATH)
+
+# Display help
+case ARGV.first
+  when '-h', '--help', 'help', nil
+    require "help"
+    puts Rtwix.help_s
+    exit ARGV.first ? 0 : 1
+end
+
+def require? path
+  require path.to_s.chomp
+  rescue LoadError => e
+  # HACK :( because we should raise on syntax errors but
+  # not if the file doesn't exist. TODO make robust!
+  raise unless e.to_s.include? path.to_s
+end
+
+begin
+  cmd = ARGV.shift
+
+  if require? Pathname.new(COMMANDS_PATH) + cmd
+    Rtwix.send cmd.downcase
+  else
+    abort "Unknown command: #{cmd}"
+  end
+end
